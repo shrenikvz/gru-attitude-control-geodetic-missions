@@ -36,14 +36,14 @@ params = {'text.usetex' : True,
 plt.rcParams.update(params)
 
 # Parameters
-batch_size = 32
-epochs = 200
-learning_rate = 3e-4
-sequence_length = 5
-hidden_sizes=[128, 128, 128]
-seed = 5678
-patience = 100   # Early stopping patience
-train_iter = 5      # Total number of times of retraining the model
+batch_size = 64                 # Batch size for training
+epochs = 200                    # Number of epochs for training
+learning_rate = 1e-4            # Learning rate for the optimizer
+sequence_length = 5             # Sequence length for the GRU model
+hidden_sizes=[128, 128, 128]    # Hidden sizes for the GRU model
+seed = 5678   
+patience = 100                  # Early stopping patience
+train_iter = 5                  # Total number of times of retraining the model
 
 @eqx.filter_value_and_grad
 def compute_loss(model, x, y):
@@ -62,7 +62,7 @@ def make_step(model, x, y, opt_state):
 
     return loss, model, opt_state
 
-parts = 5  # The attitude error time series data is divided into 5 parts i.e. 86400/5
+iterations = 5  # The attitude error time series data is divided into 5 parts i.e. 86400/5
 
 norm_error=[]
 tt=[]
@@ -75,7 +75,7 @@ stds_euler=np.empty((3,1))
 
 for jj in range(train_iter):
 
-    for ii in range(parts-1):
+    for ii in range(iterations-1):
 
         # error1.mat contains the 24 hrs (86400s) time series data of attitude (actual disturbances)
         filename = f"data/d_actual{ii}.mat"
@@ -94,8 +94,8 @@ for jj in range(train_iter):
         # Normalize the data
         normalized_data = scaler.fit_transform(data)
 
-        # The training size takes on 1/(parts-ii) portion of the original time series data set
-        train_size = int(len(normalized_data) * (1-((parts-ii-1)/(parts-ii))))
+        # The training size takes on 1/(iterations-ii) portion of the original time series data set
+        train_size = int(len(normalized_data) * (1-((iterations-ii-1)/(iterations-ii))))
 
         # The test size contains the remaining portion
         test_size = len(normalized_data) - train_size
@@ -148,14 +148,14 @@ for jj in range(train_iter):
         plt.plot(losses)
         plt.xlabel('Epoch')
         plt.ylabel('Training Loss')
-        plt.title('Iteration '+ str(ii))
+        plt.title('Iteration '+ str(ii+1))
         plt.grid(alpha = 0.8)
         plt.show()
 
         test_predictions = jax.vmap(model)(X_test)
         test_predictions = scaler.inverse_transform(test_predictions)
 
-        # These are the predictions of GRU over the test data i.e. (1-1/(parts-ii)) portion of the overall data
+        # These are the predictions of GRU over the test data i.e. (1-1/(iterations-ii)) portion of the overall data
         y_test_pred = np.array(test_predictions.reshape(-1))
 
         # These test predictions are stored in d_predictions{ii}.mat
@@ -165,7 +165,6 @@ for jj in range(train_iter):
         # Initialize Euler angles and their log
         euler_angles = np.array([0.0000001, 0.0000002, 0.0000003])  # Initial angles: phi, theta, psi
         euler_log = []
-
         controls_log=[]
 
         # Load disturbances from d_actual{ii}.mat which are the actual disturbances
@@ -186,21 +185,20 @@ for jj in range(train_iter):
 
         disturbances_estimate = mat_data['y_test_pred'].squeeze()
 
-        frac=1/parts
+        frac=1/iterations
 
-        time_steps=int((1-(ii+1)/parts)*86400)
+        time_steps=int((1-(ii+1)/iterations)*86400)
 
         dt = 0.1
 
         moments_of_inertia = [38.33, 345.0, 300.0]  # Dummy values; adjust as necessary
 
         # Initialize PID controllers for p, q, r rates
-        pid_p = PIDController(Kp=1, Ki=0.1, Kd=0.01, set_point=0)
-        pid_q = PIDController(Kp=1, Ki=0.1, Kd=0.01, set_point=0)
-        pid_r = PIDController(Kp=1, Ki=0.1, Kd=0.01, set_point=0)
+        pid_controllers = {axis: PIDController(Kp=1, Ki=0.1, Kd=0.01, set_point=0) for axis in ('p', 'q', 'r')}
+        pid_p, pid_q, pid_r = pid_controllers['p'], pid_controllers['q'], pid_controllers['r']  
 
         # Initial attitude rates
-        attitude_rates = np.array([0.0000002, 0.0000003, 0.0000004])
+        attitude_rates = np.array([2e-7, 3e-7, 4e-7])
 
         # Log for simulation
         attitudes_log = []
@@ -235,19 +233,22 @@ for jj in range(train_iter):
         attitudes_log = np.array(attitudes_log)
         norm_error.append(LA.norm(euler_log))
         tt.append(ii)
+
         # Compute the mean along the rows
         mean_attitude = np.mean(attitudes_log, axis=0).reshape((3,1))
+
         # Compute the standard deviation along the rows
         std_attitude = np.std(attitudes_log, axis=0).reshape((3,1))
+
         mean_euler = np.mean(euler_log, axis=0).reshape((3,1))
+
         # Compute the standard deviation along the rows
         std_euler = np.std(euler_log, axis=0).reshape((3,1))
-        # print(mean_attitude.shape)
+
         means_attitude=np.append(means_attitude,mean_attitude,axis=1)
         stds_attitude=np.append(stds_attitude,std_attitude,axis=1)
         means_euler=np.append(means_euler,mean_euler,axis=1)
         stds_euler=np.append(stds_euler,std_euler,axis=1)
-
 
         euler_log=np.array(euler_log)
         y_test_pred=attitudes_log[:,0]
@@ -264,7 +265,6 @@ for jj in range(train_iter):
         max_clip = 0.3
 
         # t = np.linspace(ii*frac*86400+offset,ii*frac*86400+min(frac*86400,len(attitudes_log)), min(int(frac*86400),len(attitudes_log))-offset)
-        # print(t.shape)
 
         # t = np.linspace(0, euler_log[0+offset:int(frac*86400), 0].shape[0]*4, euler_log[0+offset:int(frac*86400), 0].shape[0]*4)
         t = np.arange(0, 1478*4, 0.1)
@@ -274,58 +274,56 @@ for jj in range(train_iter):
 
         data_points = 14780 if ii <= 2 else 14770
 
-        plt.figure(figsize=(5, 3), dpi=200)
+        # Plot the angular rates
+        # plt.figure(figsize=(5, 3), dpi=200)
+        # line1 = plt.plot(t[iterations : data_points + iterations], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6, label='p', color='blue', alpha = opacity[0],)
+        # line2 = plt.plot(t[iterations : data_points + iterations], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6, label='q', color='green', alpha = opacity[1], linestyle='dashed')
+        # line3 = plt.plot(t[iterations : data_points + iterations], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6, label='r', color='red', alpha = opacity[2], linestyle='dotted')
+        # plt.xlabel('Time (s)', fontsize=10, labelpad=10)
+        # plt.ylabel(r'Angular rates ($10^{-6}$ rad/s)', fontsize = 10, labelpad = 10)
+        # legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label='p'),
+        #                 mlines.Line2D([], [], color='green', alpha=opacity[1], label='q', linestyle='dashed'),
+        #                 mlines.Line2D([], [], color='red', alpha=opacity[2], label='r', linestyle='dotted')]
+        # plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
+        # plt.xticks(np.arange(0, 2000, step=500))
+        # plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
+        # sns.despine(trim=True)
+        # plt.tight_layout()
+        # filename=f"figures/attitudes_plot{ii}.pdf"
+        # # plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
+        # plt.show()
 
-        line1 = plt.plot(t[parts : data_points + parts], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6, label='p', color='blue', alpha = opacity[0],)
-        line2 = plt.plot(t[parts : data_points + parts], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6, label='q', color='green', alpha = opacity[1], linestyle='dashed')
-        line3 = plt.plot(t[parts : data_points + parts], attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6, label='r', color='red', alpha = opacity[2], linestyle='dotted')
-        plt.xlabel('Time (s)', fontsize=10, labelpad=10)
-        plt.ylabel(r'Angular rates ($10^{-6}$ rad/s)', fontsize = 10, labelpad = 10)
+        # Plot the Euler angles
+        # plt.figure(figsize=(5, 3), dpi=200)
+        # line1 = plt.plot(t[iterations : data_points + iterations], euler_log[0+offset:int(frac*86400), 0]/4.84814e-6, label=r'$\phi$', color='blue', alpha = opacity[0])
+        # line2 = plt.plot(t[iterations : data_points + iterations], euler_log[0+offset:int(frac*86400), 1]/4.84814e-6, label=r'$\theta$', color='green', alpha = opacity[1], linestyle='dashed')
+        # line3 = plt.plot(t[iterations : data_points + iterations], euler_log[0+offset:int(frac*86400), 2]/4.84814e-6, label=r'$\psi$', color='red', alpha = opacity[2], linestyle='dotted')
+        # plt.xlabel('Time (s)', fontsize=10, labelpad=10)
+        # plt.ylabel(r'Euler angles ($10^{-6}$ rad/s)', fontsize=10, labelpad=10)
+        # legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label=r'$\phi$'),
+        #                 mlines.Line2D([], [], color='green', alpha=opacity[1], label=r'$\theta$', linestyle='dashed'),
+        #                 mlines.Line2D([], [], color='red', alpha=opacity[2], label=r'$\psi$', linestyle='dotted')]
+        # plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
+        # plt.xticks(np.arange(0, 2000, step=500))
+        # plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
+        # sns.despine(trim=True)
+        # plt.tight_layout()
+        # filename=f"figures/rates_plot{ii}.pdf"
+        # # plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
+        # plt.show()
 
-        legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label='p'),
-                        mlines.Line2D([], [], color='green', alpha=opacity[1], label='q', linestyle='dashed'),
-                        mlines.Line2D([], [], color='red', alpha=opacity[2], label='r', linestyle='dotted')]
+        # y_data_line1 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6
+        # y_data_line2 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6
+        # y_data_line3 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6
+        # y_data_line4 = euler_log[0+offset:int(frac*86400), 0]/4.84814e-6
+        # y_data_line5 = euler_log[0+offset:int(frac*86400), 1]/4.84814e-6
+        # y_data_line6 = euler_log[0+offset:int(frac*86400), 2]/4.84814e-6
 
-        plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
-        plt.xticks(np.arange(0, 2000, step=500))
-        plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
-        sns.despine(trim=True)
-        plt.tight_layout()
+        # y_data_lines = [y_data_line1, y_data_line2, y_data_line3, y_data_line4, y_data_line5, y_data_line6]
 
-        filename=f"figures/attitudes_plot{ii}.pdf"
-        # plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
-        plt.show()
-
-        plt.figure(figsize=(5, 3), dpi=200)
-
-        line1 = plt.plot(t[parts : data_points + parts], euler_log[0+offset:int(frac*86400), 0]/4.84814e-6, label=r'$\phi$', color='blue', alpha = opacity[0])
-        line2 = plt.plot(t[parts : data_points + parts], euler_log[0+offset:int(frac*86400), 1]/4.84814e-6, label=r'$\theta$', color='green', alpha = opacity[1], linestyle='dashed')
-        line3 = plt.plot(t[parts : data_points + parts], euler_log[0+offset:int(frac*86400), 2]/4.84814e-6, label=r'$\psi$', color='red', alpha = opacity[2], linestyle='dotted')
-        plt.xlabel('Time (s)', fontsize=10, labelpad=10)
-        plt.ylabel(r'Euler angles ($10^{-6}$ rad/s)', fontsize=10, labelpad=10)
-
-        legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label=r'$\phi$'),
-                        mlines.Line2D([], [], color='green', alpha=opacity[1], label=r'$\theta$', linestyle='dashed'),
-                        mlines.Line2D([], [], color='red', alpha=opacity[2], label=r'$\psi$', linestyle='dotted')]
-
-        plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
-        plt.xticks(np.arange(0, 2000, step=500))
-        plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
-        sns.despine(trim=True)
-        plt.tight_layout()
-
-        filename=f"figures/rates_plot{ii}.pdf"
-        # plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
-        plt.show()
-
-        y_data_line1 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6
-        y_data_line2 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6
-        y_data_line3 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6
-        y_data_line4 = euler_log[0+offset:int(frac*86400), 0]/4.84814e-6
-        y_data_line5 = euler_log[0+offset:int(frac*86400), 1]/4.84814e-6
-        y_data_line6 = euler_log[0+offset:int(frac*86400), 2]/4.84814e-6
-
-        y_data_lines = [y_data_line1, y_data_line2, y_data_line3, y_data_line4, y_data_line5, y_data_line6]
+        end_index = min(int(frac*86400), len(attitudes_log))
+        y_data_lines = [attitudes_log[0+offset:end_index, i]/1e-6 for i in range(3)]
+        y_data_lines += [euler_log[0+offset:end_index, i]/4.84814e-6 for i in range(3)]
 
         # Calculate the square root of the sum of squares and divide by the total number of points
         results = [np.sqrt(np.sum(np.square(line))) / len(line) for line in y_data_lines]
@@ -333,19 +331,12 @@ for jj in range(train_iter):
         results_dict = {}
 
         if ii == 0:
-
             globals()[f'results_1_{jj+1}'] = results
-
         if ii == 1:
-
             globals()[f'results_2_{jj+1}'] = results
-
         if ii == 2:
-
             globals()[f'results_3_{jj+1}'] = results
-
         if ii == 3:
-
             globals()[f'results_4_{jj+1}'] = results
 
                                             ###### Box Plot vs iterations #####
@@ -398,14 +389,21 @@ for k in range(6):
 
                                             ###### RMSE vs iterations #####
 
-rmse_errors1 = [np.mean([results_1_1[i], results_1_2[i], results_1_3[i], results_1_4[i], results_1_5[i]]) for i in range(6)]
-rmse_errors2 = [np.mean([results_2_1[i], results_2_2[i], results_2_3[i], results_2_4[i], results_2_5[i]]) for i in range(6)]
-rmse_errors3 = [np.mean([results_3_1[i], results_3_2[i], results_3_3[i], results_3_4[i], results_3_5[i]]) for i in range(6)]
-rmse_errors4 = [np.mean([results_4_1[i], results_4_2[i], results_4_3[i], results_4_4[i], results_4_5[i]]) for i in range(6)]
+# rmse_errors1 = [np.mean([results_1_1[i], results_1_2[i], results_1_3[i], results_1_4[i], results_1_5[i]]) for i in range(6)]
+# rmse_errors2 = [np.mean([results_2_1[i], results_2_2[i], results_2_3[i], results_2_4[i], results_2_5[i]]) for i in range(6)]
+# rmse_errors3 = [np.mean([results_3_1[i], results_3_2[i], results_3_3[i], results_3_4[i], results_3_5[i]]) for i in range(6)]
+# rmse_errors4 = [np.mean([results_4_1[i], results_4_2[i], results_4_3[i], results_4_4[i], results_4_5[i]]) for i in range(6)]
 
-rmse_errors = np.array([rmse_errors1, rmse_errors2, rmse_errors3, rmse_errors4]) 
+# rmse_errors = np.array([rmse_errors1, rmse_errors2, rmse_errors3, rmse_errors4]) 
 
-tt = np.array([1, 2, 3, 4])
+results = [[results_1_1, results_1_2, results_1_3, results_1_4, results_1_5],
+           [results_2_1, results_2_2, results_2_3, results_2_4, results_2_5],
+           [results_3_1, results_3_2, results_3_3, results_3_4, results_3_5],
+           [results_4_1, results_4_2, results_4_3, results_4_4, results_4_5]]
+
+rmse_errors = np.array([[np.mean([result[i] for result in results_set]) for i in range(6)] for results_set in results])
+
+tt = np.array([1, 2, 3, 4])     # Iterations
 
 # Plot RMSE of angular rates vs iterations
 plt.figure(figsize=(5, 3), dpi=200)
@@ -441,4 +439,3 @@ plt.tight_layout()
 filename=f"figures/rmse_vs_iterations_euler.pdf"
 plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
 plt.show()
-
