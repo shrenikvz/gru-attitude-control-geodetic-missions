@@ -12,7 +12,7 @@ import jax.numpy as jnp                             # NumPy-like API for JAX
 import jax.lax as lax                               # Linear algebra library for JAX
 import jax.random as jrandom                        # Random number generation for JAX
 import equinox as eqx                               # Deep learning library for JAX
-from typing import List                             # Type hints for function signatures
+from typing import List, Tuple                             # Type hints for function signatures
 
 
 class GRUNetwork(eqx.Module):
