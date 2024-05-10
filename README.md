@@ -9,7 +9,7 @@ The code is structured as follows:
 + [data](./data): Data for disturbances.
 + [src](./src): Contains the Python codes required to implement the methodology.
 + [figures](./figures): Contains saved figures.
-+ [examples](./main.py): Python code that implements the methodology. 
++ [main](./main.py): Python code that implements the methodology. 
 
 ## Installion
 
