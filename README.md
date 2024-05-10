@@ -1,4 +1,4 @@
-# Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodesic Missions
+# gru-attitude-control-geodesic-missions
 
 This repository replicates the result of the paper (https://arxiv.com).
 
@@ -6,11 +6,15 @@ This repository replicates the result of the paper (https://arxiv.com).
 
 The code is structured as follows:
 
-+ [src](./src): Contains the Python code that implements the methodology.
-+ [examples](./examples): Contains the Python code that replicates the results of the paper, and the Python scripts that make the plots.
-examples, and the Python scripts that make the plots.
++ [data](./data): Data for disturbances.
++ [src](./src): Contains the Python codes required to implement the methodology.
++ [figures](./figures): Contains saved figures.
++ [examples](./main.py): Python code that implements the methodology. 
 
-## Installing the code
+## Installion
+
+Ensure that you have Python 3.8 or later installed on your system.
+We highly recommend using the most recent versions of JAX and JAX-lib, along with compatible CUDA and cuDNN versions
 
 The requirements for the Python plotting scripts are (ignoring standard libraries):
 + [matplotlib](https://matplotlib.org)
@@ -33,4 +37,11 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
 
 **Note:** Because the random seed changes every time you run the code, the figures you produce may be slightly different from the ones found in the paper. We decided not to fix the random seed to avoid a positive results bias, or ``hero'' runs.
 
+## Citation
 
+    @article{zinage2024gruattitude,
+      title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodesic Missions},
+      author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
+      journal={arXiv preprint arXiv:2308.08468},
+      year={2024}
+    }
