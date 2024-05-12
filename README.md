@@ -14,7 +14,23 @@ The code is structured as follows:
 ## Installion
 
 Ensure that you have Python 3.8 or later installed on your system.
-We highly recommend using the most recent versions of JAX and JAX-lib, along with compatible CUDA and cuDNN versions
+In addition to the common python packages (`numpy`, `matplotlib`, etc.), you will need to install [jax](https://jax.readthedocs.io/en/latest/index.html) to run the codes.
+
+**Note:** If, while installing `jax` on a Mac with an M1 chip, you run into the error saying something like
+```
+RuntimeError: This version of jaxlib was built using AVX instructions, which your CPU and/or operating system do not support. You may be able work around this issue by building jaxlib from source.
+```
+a workaround for now is to install `jax` and `jaxlib` via conda-forge, as mentioned in [this comment](https://github.com/google/jax/issues/5501#issuecomment-1032891169).
+```
+conda install -c conda-forge jaxlib
+conda install -c conda-forge jax
+```
+
+To install `equinox` library type the following in the terminal:
+
+```
+pip install equinox
+```
 
 The requirements for the Python plotting scripts are (ignoring standard libraries):
 + [matplotlib](https://matplotlib.org)
