@@ -111,4 +111,3 @@ def plot_frequency_spectrum(time_series, sample_spacing=1.0):
     filtered_magnitudes = positive_magnitudes[filter_mask]
 
     return filtered_frequencies, filtered_magnitudes
-
