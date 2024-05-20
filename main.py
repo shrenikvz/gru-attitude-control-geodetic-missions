@@ -46,12 +46,6 @@ seed = 5678
 patience = 50                   # Early stopping patience
 train_iter = 5                  # Total number of times of retraining the model
 
-# @eqx.filter_value_and_grad
-# def compute_loss(model, x, y):
-
-#     pred_y = jax.vmap(model)(x)
-
-#     return jnp.mean(jnp.square(pred_y - y))
 
 def huber_loss(pred_y, y, delta=1.0):
     residual = jnp.abs(pred_y - y)
@@ -79,11 +73,11 @@ iterations = 5  # The attitude error time series data is divided into 5 parts i.
 norm_error=[]
 tt=[]
 
-means_attitude=np.empty((3,1))
-stds_attitude=np.empty((3,1))
+means_attitude = np.empty((3,1))
+stds_attitude = np.empty((3,1))
 
-means_euler=np.empty((3,1))
-stds_euler=np.empty((3,1))
+means_euler = np.empty((3,1))
+stds_euler = np.empty((3,1))
 
 for jj in tqdm(range(train_iter)):
 
@@ -150,7 +144,7 @@ for jj in tqdm(range(train_iter)):
                 epochs_no_improve += 1
 
             if epochs_no_improve == patience:
-                print(f'Early stopping on epoch {step}')
+                # print(f'Early stopping on epoch {step}')
                 break
 
             # print(f"Epoch={step}, loss={loss}, time={epoch_time} seconds")
@@ -274,12 +268,6 @@ for jj in tqdm(range(train_iter)):
 
         t=np.linspace(ii*frac*86400+offset,ii*frac*86400+min(frac*86400,len(attitudes_log)), min(int(frac*86400),len(attitudes_log))-offset)
 
-        min_clip = -0.3  # Minimum y-value to clip to
-        max_clip = 0.3
-
-        # t = np.linspace(ii*frac*86400+offset,ii*frac*86400+min(frac*86400,len(attitudes_log)), min(int(frac*86400),len(attitudes_log))-offset)
-
-        # t = np.linspace(0, euler_log[0+offset:int(frac*86400), 0].shape[0]*4, euler_log[0+offset:int(frac*86400), 0].shape[0]*4)
         t = np.arange(0, 1478*4, 0.1)
 
         # Opacity for different legends
@@ -326,15 +314,6 @@ for jj in tqdm(range(train_iter)):
         filename=f"figures/rates_plot{ii}.pdf"
         plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
         plt.show()
-
-        # y_data_line1 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6
-        # y_data_line2 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6
-        # y_data_line3 = attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6
-        # y_data_line4 = euler_log[0+offset:int(frac*86400), 0]/4.84814e-6
-        # y_data_line5 = euler_log[0+offset:int(frac*86400), 1]/4.84814e-6
-        # y_data_line6 = euler_log[0+offset:int(frac*86400), 2]/4.84814e-6
-
-        # y_data_lines = [y_data_line1, y_data_line2, y_data_line3, y_data_line4, y_data_line5, y_data_line6]
 
         end_index = min(int(frac*86400), len(attitudes_log))
         y_data_lines = [attitudes_log[0+offset:end_index, i]/1e-6 for i in range(3)]
@@ -404,13 +383,6 @@ for k in range(6):
         plt.show()
 
                                             ###### RMSE vs iterations #####
-
-# rmse_errors1 = [np.mean([results_1_1[i], results_1_2[i], results_1_3[i], results_1_4[i], results_1_5[i]]) for i in range(6)]
-# rmse_errors2 = [np.mean([results_2_1[i], results_2_2[i], results_2_3[i], results_2_4[i], results_2_5[i]]) for i in range(6)]
-# rmse_errors3 = [np.mean([results_3_1[i], results_3_2[i], results_3_3[i], results_3_4[i], results_3_5[i]]) for i in range(6)]
-# rmse_errors4 = [np.mean([results_4_1[i], results_4_2[i], results_4_3[i], results_4_4[i], results_4_5[i]]) for i in range(6)]
-
-# rmse_errors = np.array([rmse_errors1, rmse_errors2, rmse_errors3, rmse_errors4]) 
 
 results = [[results_1_1, results_1_2, results_1_3, results_1_4, results_1_5],
            [results_2_1, results_2_2, results_2_3, results_2_4, results_2_5],
