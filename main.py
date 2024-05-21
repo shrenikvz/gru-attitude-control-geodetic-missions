@@ -5,7 +5,7 @@ Author: Vrushabh Zinage, Shrenik Zinage
 '''
 
 from src.GRUNetwork import GRUNetwork
-from src.functions import create_sequences, dataloader, attitude_dynamics, euler_rates
+from src.functions import create_sequences, dataloader, attitude_dynamics, euler_rates, plot_power_spectral_density, plot_frequency_spectrum
 from src.PIDController import PIDController
 
 # Required libraries
@@ -44,7 +44,7 @@ sequence_length = 5             # Input window size for the GRU model
 hidden_sizes=[128, 128, 128]    # Hidden sizes for the GRU model
 seed = 5678   
 patience = 50                   # Early stopping patience
-train_iter = 5                  # Total number of times of retraining the model
+train_iter = 1                  # Total number of times of retraining the model
 
 
 def huber_loss(pred_y, y, delta=1.0):
@@ -314,6 +314,45 @@ for jj in tqdm(range(train_iter)):
         filename=f"figures/rates_plot{ii}.pdf"
         plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
         plt.show()
+
+
+        plt.figure(figsize=(5, 3), dpi=200)
+        line1 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 0]/1e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label='p', color='blue', alpha = opacity[0],)
+        line2 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 1]/1e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label='q', color='green', alpha = opacity[1], linestyle='dashed')
+        line3 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(attitudes_log)), 2]/1e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label='r', color='red', alpha = opacity[2], linestyle='dotted')
+        plt.xlabel('Frequency (Hz)', fontsize=10, labelpad=10)
+        # plt.ylabel(r'PSD of angular rates ($10^{-12} (rad/s)^2/Hz)$)', fontsize = 8, labelpad = 10)
+        plt.ylabel('PSD of angular rates' + '\n' + r'($10^{-12}$ (rad/s)$^2$/Hz)', fontsize = 10, labelpad = 10)
+        plt.title('Iteration ' + str(ii+1))
+        legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label='p'),
+                        mlines.Line2D([], [], color='green', alpha=opacity[1], label='q', linestyle='dashed'),
+                        mlines.Line2D([], [], color='red', alpha=opacity[2], label='r', linestyle='dotted')]
+        plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
+        plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
+        sns.despine(trim=True)
+        plt.tight_layout()
+        filename=f"figures/psd_plot_attitude_{ii}.pdf"
+        plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
+        plt.show()
+
+        plt.figure(figsize=(5, 3), dpi=200)
+        line1 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(euler_log)), 0]/4.84814e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label=r'$\phi$', color='blue', alpha = opacity[0])
+        line2 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(euler_log)), 1]/4.84814e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label=r'$\theta$', color='green', alpha = opacity[1], linestyle='dashed')
+        line3 = plt.psd(attitudes_log[0+offset:min(int(frac*86400),len(euler_log)), 2]/4.84814e-6, NFFT=1024, Fs=1, window=np.hamming(1024), noverlap=512, label=r'$\psi$', color='red', alpha = opacity[2], linestyle='dotted')
+        plt.xlabel('Frequency (Hz)', fontsize=10, labelpad=10)
+        plt.ylabel('PSD of euler angles' + '\n' + r'($10^{-12}$ (rad/s)$^2$/Hz)', fontsize = 10, labelpad = 10)
+        plt.title('Iteration ' + str(ii+1))
+        legend_handles = [mlines.Line2D([], [], color='blue', alpha=opacity[0], label='p'),
+                        mlines.Line2D([], [], color='green', alpha=opacity[1], label='q', linestyle='dashed'),
+                        mlines.Line2D([], [], color='red', alpha=opacity[2], label='r', linestyle='dotted')]
+        plt.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1, 1))
+        plt.grid(True, linestyle=':', linewidth=0.5, color='gray')
+        sns.despine(trim=True)
+        plt.tight_layout()
+        filename=f"figures/psd_plot_rates_{ii}.pdf"
+        plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=400)
+        plt.show()
+
 
         end_index = min(int(frac*86400), len(attitudes_log))
         y_data_lines = [attitudes_log[0+offset:end_index, i]/1e-6 for i in range(3)]
