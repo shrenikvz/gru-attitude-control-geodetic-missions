@@ -5,8 +5,10 @@ Author: Shrenik Zinage, Vrushabh Zinage
 '''
 
 # Required libraries
-import jax.numpy as jnp                             # NumPy-like API for JAX
-import numpy as np                                  # NumPy library for numerical computing
+import jax.numpy as jnp                             
+import numpy as np                                  
+from scipy.signal import hamming
+from scipy.fft import fft, ifft
 
 def create_sequences(data, sequence_length):
 
@@ -73,41 +75,39 @@ def euler_rates(attitude_rates, euler_angles):
 
     return np.array([phi_dot, theta_dot, psi_dot])
 
-def plot_power_spectral_density(time_series, sample_spacing=1.0):
+def psd_from_fft(z, n, m, time_step):
 
-    # Compute the Power Spectral Density (PSD)
-    fft_result = np.fft.fft(time_series)
-    psd = np.abs(fft_result) ** 2
+    '''
+    # z : discrete time signal
+    # n : length of z
+    # m : hamming variable
+    # time_step : time step
+    '''
 
-    # Compute the frequency bins
-    sample_count = len(time_series)
-    frequencies = np.fft.fftfreq(sample_count, sample_spacing)
+    # Compute the FFT of the input signal
+    z_frequency = fft(z)
+    
+    # Calculate the power spectral density
+    R = z_frequency * np.conj(z_frequency) / n
+    fr = np.arange(n) / n * (1 / time_step)
+    P = 2 * R * time_step
+    
+    # Generate and normalize the Hamming window
+    w = hamming(m)
+    w = w / np.sum(w)
+    
+    # Prepare the window for convolution
+    w = np.concatenate((w[int(np.ceil((m+1)/2))-1:], np.zeros(n-m), w[:int(np.ceil((m+1)/2))-1]))
+    w = fft(w)
+    
+    # Convolve the window with the PSD estimate
+    pavg = fft(P)
+    pavg = ifft(w * pavg)
+    
+    # Extract the positive frequency components and normalize
+    S = np.abs(pavg[:int(np.ceil(n/2))])
+    F = fr[:int(np.ceil(n/2))]
+    S = S / (2 * np.pi)
+    W = 2 * np.pi * F
 
-    # Only plot the positive frequencies
-    positive_frequencies = frequencies[:sample_count // 2]
-    positive_psd = psd[:sample_count // 2]
-
-    return positive_frequencies, positive_psd
-
-def plot_frequency_spectrum(time_series, sample_spacing=1.0):
-
-    # Compute the FFT
-    fft_result = np.fft.fft(time_series)
-
-    # Get the magnitudes
-    magnitudes = np.abs(fft_result)
-
-    # Compute the frequency bins
-    sample_count = len(time_series)
-    frequencies = np.fft.fftfreq(sample_count, sample_spacing)
-
-    # Only plot the positive frequencies
-    positive_frequencies = frequencies[:sample_count // 2]
-    positive_magnitudes = magnitudes[:sample_count // 2]
-
-    # Filtering the frequencies to be within the range 10^-3 to 10^-1
-    filter_mask = (positive_frequencies >= 1e-3) & (positive_frequencies <= 1e-1)
-    filtered_frequencies = positive_frequencies[filter_mask]
-    filtered_magnitudes = positive_magnitudes[filter_mask]
-
-    return filtered_frequencies, filtered_magnitudes
+    return S, W
