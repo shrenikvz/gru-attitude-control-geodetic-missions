@@ -26,17 +26,17 @@ conda install -c conda-forge jaxlib
 conda install -c conda-forge jax
 ```
 
-To install `equinox` library type the following in the terminal:
+To install `equinox` and `optax` libraries type the following in the terminal:
 
 ```
 pip install equinox
+pip install optax
 ```
 
 The requirements for the Python plotting scripts are (ignoring standard libraries):
 + [matplotlib](https://matplotlib.org)
 + [seaborn](https://seaborn.pydata.org)
 + [texlive](https://tug.org/texlive/) If you are on OS X and using homebrew, then run
-    then run
     ```
     brew install texlive
     ```
