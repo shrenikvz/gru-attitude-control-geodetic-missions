@@ -1,4 +1,4 @@
-# gru-attitude-control-geodesic-missions
+# gru-attitude-control-geodetic-missions
 
 This repository replicates the result of the paper (https://arxiv.com).
 
