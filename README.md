@@ -1,6 +1,6 @@
 # gru-attitude-control-geodetic-missions
 
-This repository replicates the result of the paper (https://arxiv.com).
+This repository replicates the result of the paper "Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions".
 
 ## Code outline
 
@@ -51,13 +51,15 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
 
 ## Reproducing the paper results
 
-**Note:** Because the random seed changes every time you run the code, the figures you produce may be slightly different from the ones found in the paper. We decided not to fix the random seed to avoid a positive results bias, or ``hero'' runs.
+**Note:** Due to the variability of the random seed with each execution of the code, the resulting figures may differ slightly from those presented in the paper. We chose not to fix the random seed to avoid a positive results bias, or ``hero'' runs.
 
 ## Citation
 
     @article{zinage2024gruattitude,
-      title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodesic Missions},
+      title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions},
       author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
-      journal={arXiv preprint arXiv:2308.08468},
+      journal={arXiv preprint arXiv:},
       year={2024}
     }
+
+  Please cite our paper if you use this code for research. 
