@@ -2,6 +2,8 @@
 
 This repository replicates the result of the paper "Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions".
 
+Authors: [Vrushabh Zinage](https://scholar.google.com/citations?user=hyHy9DQAAAAJ&hl=en&oi=ao), [Shrenik Zinage](https://scholar.google.com/citations?user=CuaVvXsAAAAJ&hl=en), [Srinivas Bettadpur](https://scholar.google.com/citations?user=u4E5AboAAAAJ&hl=en&oi=ao), [Efstathios Bakolas](https://scholar.google.com/citations?user=mnXfihQAAAAJ&hl=en&oi=ao).
+
 ## Code outline
 
 The code is structured as follows:
@@ -62,4 +64,3 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
       year={2024}
     }
 
-  Please cite our paper if you use this code for research. 
