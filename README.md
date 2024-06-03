@@ -13,7 +13,7 @@ The code is structured as follows:
 + [figures](./figures): Contains saved figures.
 + [main](./main.py): Python code that implements the methodology. 
 
-## Installion
+## Installation
 
 Ensure that you have Python 3.8 or later installed on your system.
 In addition to the common python packages (`numpy`, `matplotlib`, etc.), you will need to install [jax](https://jax.readthedocs.io/en/latest/index.html) to run the codes.
@@ -57,10 +57,9 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
 
 ## Citation
 
-    @article{zinage2024gruattitude,
-      title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions},
-      author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
-      journal={arXiv preprint arXiv:},
-      year={2024}
-    }
-
+   @article{zinage2024leveraging,
+  title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions},
+  author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
+  journal={arXiv preprint arXiv:2405.15159},
+  year={2024}
+}
