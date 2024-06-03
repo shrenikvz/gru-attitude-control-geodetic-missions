@@ -57,7 +57,10 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
 
 ## Citation
 
-   @article{zinage2024leveraging,
+If you use this work in your research, please cite:
+
+```bibtex
+@article{zinage2024leveraging,
   title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions},
   author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
   journal={arXiv preprint arXiv:2405.15159},
