@@ -60,9 +60,10 @@ The requirements for the Python plotting scripts are (ignoring standard librarie
 If you use this work in your research, please cite:
 
 ```bibtex
-@article{zinage2024leveraging,
-  title={Leveraging Gated Recurrent Units for Iterative Online Precise Attitude Control for Geodetic Missions},
+@inproceedings{zinage2025leveraging,
+  title={Leveraging gated recurrent units for iterative online precise attitude control for geodetic missions},
   author={Zinage, Vrushabh and Zinage, Shrenik and Bettadpur, Srinivas and Bakolas, Efstathios},
-  journal={arXiv preprint arXiv:2405.15159},
-  year={2024}
+  booktitle={AIAA SCITECH 2025 Forum},
+  pages={1701},
+  year={2025}
 }
